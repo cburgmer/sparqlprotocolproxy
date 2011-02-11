@@ -122,7 +122,11 @@ class SPARQLProtocolProxy(BaseHTTPRequestHandler):
 
         f = StringIO()
         response = self.store.execute_sparql(params['query'])
-        response_str = json.dumps(response)
+        try:
+            response_str = json.dumps(response)
+        except TypeError:
+            # Workaround for surf_rdflib plugin
+            response_str = response.serialize('json')
         f.write(response_str)
         length = f.tell()
         f.seek(0)
