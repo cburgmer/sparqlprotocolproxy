@@ -39,6 +39,9 @@ Change the store settings around line 55 to::
                      'writer': "sparql_protocol",
                      'endpoint': 'http://localhost:8890/sparql'}
 
+Then run with::
+
+   $ python sparqlprotocolproxy.py --cors --port 8000
 
 
 Contact
