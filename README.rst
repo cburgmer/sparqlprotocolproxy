@@ -31,6 +31,16 @@ And one out of:
 * surf.allegro_franz
 * surf.sparql_protocol
 
+Howto run with Virtuoso
+-----------------------
+Change the store settings around line 55 to::
+
+   STORE_SETTINGS = {'reader': "sparql_protocol",
+                     'writer': "sparql_protocol",
+                     'endpoint': 'http://localhost:8890/sparql'}
+
+
+
 Contact
 =======
 Please report bugs to http://github.com/cburgmer/sparqlprotocolproxy/issues.
