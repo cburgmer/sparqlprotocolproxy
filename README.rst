@@ -16,8 +16,14 @@ interface:
 
 This server supports CORS, see http://enable-cors.org/.
 
-You might want to use Deniz (http://github.com/cburgmer/deniz) to query the data
+You might want to use Deniz (http://github.com/cburgmer/deniz) to query data
 exposed by this proxy.
+
+Usage
+=====
+Run with::
+
+   $ python sparqlprotocolproxy.py --cors --port 8000
 
 Dependencies
 ============
@@ -31,18 +37,17 @@ And one out of:
 * surf.allegro_franz
 * surf.sparql_protocol
 
+For example install with::
+
+    $ easy_install SuRF surf.rdflib
+
 Howto run with Virtuoso
------------------------
-Change the store settings around line 55 to::
+=======================
+Install ``surf.sparql_protocol`` and change the store settings of the
+SPARQLHTTPProxy to::
 
-   STORE_SETTINGS = {'reader': "sparql_protocol",
-                     'writer': "sparql_protocol",
-                     'endpoint': 'http://localhost:8890/sparql'}
-
-Then run with::
-
-   $ python sparqlprotocolproxy.py --cors --port 8000
-
+   DEFAULT_STORE_SETTINGS = {'reader': "sparql_protocol",
+                             'endpoint': 'http://localhost:8890/sparql'}
 
 Contact
 =======

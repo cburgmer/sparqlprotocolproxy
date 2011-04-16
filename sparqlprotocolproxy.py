@@ -22,7 +22,7 @@ You might want to use Deniz (http://github.com/cburgmer/deniz) to query the data
 exposed by this proxy.
 """
 
-__all__ = ['SPARQLProtocolProxy']
+__all__ = ['SPARQLHTTPProxy', 'SPARQLProtocolProxy']
 
 __version__ = '0.1'
 
@@ -37,14 +37,6 @@ from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 
 from surf.store import Store
 
-# TODO try to make these options non-global
-class Options(object):
-    def __init__(self, cors=False, index_file=None):
-        self.cors = cors
-        self.index_file = index_file
-
-options = Options()
-
 def query_params(query_str):
     """Convert the query string to a dict of parameters."""
     params = {}
@@ -53,16 +45,24 @@ def query_params(query_str):
         params[key] = urllib.unquote_plus(value)
     return params
 
+class SPARQLHTTPProxy(HTTPServer):
+    DEFAULT_STORE_SETTINGS = {'reader': "rdflib",
+                              'rdflib_store': 'IOMemory'}
+
+    def __init__(self, server_address, RequestHandlerClass,
+                 store=None, cors=False, index_file=None):
+        HTTPServer.__init__(self, server_address, RequestHandlerClass)
+
+        self.store = store or self._default_store()
+        self.cors = cors
+        self.index_file = index_file
+
+    def _default_store(self):
+        return Store(**SPARQLHTTPProxy.DEFAULT_STORE_SETTINGS)
+
+
 class SPARQLProtocolProxy(BaseHTTPRequestHandler):
     """HTTP server exposing a SPARQL protocol endpoint."""
-    @property
-    def store(self):
-        if not hasattr(self, '__store'):
-            STORE_SETTINGS = {'reader': "rdflib",
-                              'writer': "rdflib",
-                              'rdflib_store': 'IOMemory'}
-            self.__store = Store(**STORE_SETTINGS)
-        return self.__store
 
     def do_GET(self):
         """Serve a GET request."""
@@ -81,12 +81,12 @@ class SPARQLProtocolProxy(BaseHTTPRequestHandler):
         """Respond where an index.html is expected."""
         global options
 
-        if options.index_file:
+        if self.server.index_file:
             try:
                 # Always read in binary mode. Opening files in text mode may
                 # cause newline translations, making the actual size of the
                 # content transmitted *less* than the content-length!
-                f = open(options.index_file, 'rb')
+                f = open(self.server.index_file, 'rb')
             except IOError:
                 self.send_error(404, "File not found")
                 return
@@ -112,7 +112,7 @@ class SPARQLProtocolProxy(BaseHTTPRequestHandler):
         self.send_header("Content-Length", length)
         self.send_header("Content-type", 'text/html; charset=UTF-8')
         self.send_header("Last-Modified", self.date_time_string(date_time))
-        if options.cors:
+        if self.server.cors:
             self.send_header("Access-Control-Allow-Origin", '*')
         self.end_headers()
 
@@ -127,7 +127,7 @@ class SPARQLProtocolProxy(BaseHTTPRequestHandler):
             return
 
         f = StringIO()
-        response = self.store.execute_sparql(params['query'])
+        response = self.server.store.execute_sparql(params['query'])
         try:
             response_str = json.dumps(response)
         except TypeError:
@@ -140,7 +140,7 @@ class SPARQLProtocolProxy(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Length", str(length))
         self.send_header("Content-type", 'application/sparql-results+json')
-        if options.cors:
+        if self.server.cors:
             self.send_header("Access-Control-Allow-Origin", '*')
         self.end_headers()
 
@@ -184,7 +184,8 @@ def run():
 
     options, args = parser.parse_args()
 
-    httpd = HTTPServer((options.host, options.port), SPARQLProtocolProxy)
+    httpd = SPARQLHTTPProxy((options.host, options.port), SPARQLProtocolProxy,
+                            cors=options.cors, index_file=options.index_file)
     logging.info("Starting up on %s:%s" % (options.host, options.port))
     httpd.serve_forever()
 
