@@ -12,7 +12,7 @@ setup(name='sparqlprotocolproxy',
       author_email="cburgmer@ira.uka.de",
       url = 'http://github.com/cburmer/sparqlprotocolproxy',
       py_modules=['sparqlprotocolproxy'],
-      requires=['SuRF'],
+      #install_requires=['SuRF', 'surf.rdflib'], # TODO currently not installable as dependency
       classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
