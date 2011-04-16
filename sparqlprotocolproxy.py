@@ -37,7 +37,13 @@ from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 
 from surf.store import Store
 
-options = None
+# TODO try to make these options non-global
+class Options(object):
+    def __init__(self, cors=False, index_file=None):
+        self.cors = cors
+        self.index_file = index_file
+
+options = Options()
 
 def query_params(query_str):
     """Convert the query string to a dict of parameters."""
